@@ -34,12 +34,7 @@ This forces clients to handle each endpoint specially. `err-envelope` provides a
 }
 ```
 
-- **Consistent shape**: Same structure across all errors
-- **Machine-readable codes**: Stable identifiers for error types
-- **Human-readable messages**: Clear explanations
-- **Structured details**: Type-safe additional context
-- **Trace IDs**: Request correlation for debugging
-- **Retry signals**: Client knows when to retry
+Every field has a purpose: stable codes for logic, messages for humans, details for context, trace IDs for debugging, and retry signals for resilience.
 
 ## Installation
 
@@ -217,37 +212,17 @@ http.ListenAndServe(":8080", handler)
 
 ## Design Principles
 
-### Minimal
-- No external dependencies (just stdlib)
-- ~300 lines of code
-- Single responsibility: error envelopes
+**Minimal**: ~300 lines, stdlib only, single responsibility.
 
-### Framework-Agnostic
-- Works with `net/http` out of the box
-- Easy adapters for chi/gin/echo
-- No opinions on routing/middleware
+**Framework-Agnostic**: Works with `net/http` out of the box. Easy adapters for chi/gin/echo.
 
-### Predictable
-- Stable error codes (never change)
-- Consistent structure (clients can rely on shape)
-- Sensible defaults (status codes, retryability)
+**Predictable**: Error codes are stable (never change). Messages may evolve for clarity. Sensible defaults for status codes and retryability.
 
-### Observable
-- Trace IDs for request correlation
-- Structured details for rich logging
-- Cause chains preserved (via `errors.Unwrap`)
+**Observable**: Trace IDs for request correlation. Structured details for logging. Cause chains preserved via `errors.Unwrap`.
 
-## Comparison
+## Compatibility
 
-| Feature | err-envelope | Raw JSON | Problem Details (RFC 9457) |
-|---------|--------------|----------|----------------------------|
-| Stable codes | ✅ | ❌ | ✅ |
-| Retryable flag | ✅ | ❌ | ❌ |
-| Trace ID | ✅ | ❌ | ❌ |
-| Stdlib only | ✅ | ✅ | ❌ (needs library) |
-| Learning curve | Low | None | Medium |
-
-If you already use Problem Details (RFC 9457), you can map between formats at the edge.
+If you already use RFC 7807 Problem Details, this can coexist—map between formats at the edge.
 
 ## JSON Schema
 
@@ -287,19 +262,17 @@ curl http://localhost:8080/protected
 curl http://localhost:8080/timeout
 ```
 
-## Philosophy
+## Integration Patterns
 
-This package is intentionally small and boring. It solves one problem well:
+**`net/http`** (default): Use `errenvelope.Write(w, r, err)` and `errenvelope.TraceMiddleware(mux)`.
 
-> **Consistent error responses across HTTP services**
+**Chi/Gin/Echo**: Wrap errors in your middleware layer before writing responses.
 
-It doesn't:
-- Replace your validation library
-- Provide routing/middleware
-- Lock you into a framework
-- Try to handle every edge case
+**OpenAPI/TypeScript**: Use the included [JSON Schema](schema.json) to generate client types.
 
-If you want more power, build on top. If you want less, copy the pattern.
+## Versioning
+
+Follows semantic versioning. No breaking changes to envelope fields (`code`, `message`, `details`, `trace_id`, `retryable`) in minor releases.
 
 ## Used By
 
