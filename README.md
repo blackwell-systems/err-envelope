@@ -1,7 +1,7 @@
 # err-envelope
 
 [![Blackwell Systems™](https://raw.githubusercontent.com/blackwell-systems/blackwell-docs-theme/main/badge-trademark.svg)](https://github.com/blackwell-systems)
-[![Release](https://img.shields.io/github/v/release/blackwell-systems/err-envelope?include_prereleases=false)](https://github.com/blackwell-systems/err-envelope/releases)
+[![Release](https://img.shields.io/github/v/release/blackwell-systems/err-envelope)](https://github.com/blackwell-systems/err-envelope/releases)
 [![Go Reference](https://pkg.go.dev/badge/github.com/blackwell-systems/err-envelope.svg)](https://pkg.go.dev/github.com/blackwell-systems/err-envelope)
 [![CI](https://github.com/blackwell-systems/err-envelope/actions/workflows/ci.yml/badge.svg)](https://github.com/blackwell-systems/err-envelope/actions/workflows/ci.yml)
 [![Go Report Card](https://goreportcard.com/badge/github.com/blackwell-systems/err-envelope)](https://goreportcard.com/report/github.com/blackwell-systems/err-envelope)
