@@ -15,6 +15,12 @@ type ValidationDetails struct {
 	Fields FieldErrors `json:"fields"`
 }
 
+// Internal creates an internal server error (500).
+func Internal(msg string) *Error {
+	return New(CodeInternal, http.StatusInternalServerError, msg).
+		WithRetryable(false)
+}
+
 // BadRequest creates a generic bad request error (400).
 func BadRequest(msg string) *Error {
 	return New(CodeBadRequest, http.StatusBadRequest, msg).
@@ -63,6 +69,25 @@ func MethodNotAllowed(msg string) *Error {
 func RequestTimeout(msg string) *Error {
 	return New(CodeRequestTimeout, http.StatusRequestTimeout, msg).
 		WithRetryable(true)
+}
+
+// Gone creates a gone error (410) for resources that no longer exist.
+func Gone(msg string) *Error {
+	return New(CodeGone, http.StatusGone, msg).
+		WithRetryable(false)
+}
+
+// PayloadTooLarge creates a payload too large error (413).
+func PayloadTooLarge(msg string) *Error {
+	return New(CodePayloadTooLarge, http.StatusRequestEntityTooLarge, msg).
+		WithRetryable(false)
+}
+
+// UnprocessableEntity creates an unprocessable entity error (422).
+// Useful for semantic validation errors that differ from 400.
+func UnprocessableEntity(msg string) *Error {
+	return New(CodeUnprocessableEntity, http.StatusUnprocessableEntity, msg).
+		WithRetryable(false)
 }
 
 // RateLimited creates a rate limit error (429).

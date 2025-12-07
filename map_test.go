@@ -9,6 +9,23 @@ import (
 	"time"
 )
 
+func TestInternal(t *testing.T) {
+	err := Internal("database error")
+
+	if err.Code != CodeInternal {
+		t.Errorf("expected code %s, got %s", CodeInternal, err.Code)
+	}
+	if err.Status != http.StatusInternalServerError {
+		t.Errorf("expected status %d, got %d", http.StatusInternalServerError, err.Status)
+	}
+	if err.Message != "database error" {
+		t.Errorf("expected message 'database error', got %s", err.Message)
+	}
+	if err.Retryable {
+		t.Error("internal error should not be retryable")
+	}
+}
+
 func TestBadRequest(t *testing.T) {
 	err := BadRequest("malformed JSON")
 
@@ -139,6 +156,57 @@ func TestRequestTimeout(t *testing.T) {
 	}
 	if !err.Retryable {
 		t.Error("request timeout should be retryable")
+	}
+}
+
+func TestGone(t *testing.T) {
+	err := Gone("resource permanently deleted")
+
+	if err.Code != CodeGone {
+		t.Errorf("expected code %s, got %s", CodeGone, err.Code)
+	}
+	if err.Status != http.StatusGone {
+		t.Errorf("expected status %d, got %d", http.StatusGone, err.Status)
+	}
+	if err.Message != "resource permanently deleted" {
+		t.Errorf("expected message 'resource permanently deleted', got %s", err.Message)
+	}
+	if err.Retryable {
+		t.Error("gone should not be retryable")
+	}
+}
+
+func TestPayloadTooLarge(t *testing.T) {
+	err := PayloadTooLarge("upload exceeds 10MB limit")
+
+	if err.Code != CodePayloadTooLarge {
+		t.Errorf("expected code %s, got %s", CodePayloadTooLarge, err.Code)
+	}
+	if err.Status != http.StatusRequestEntityTooLarge {
+		t.Errorf("expected status %d, got %d", http.StatusRequestEntityTooLarge, err.Status)
+	}
+	if err.Message != "upload exceeds 10MB limit" {
+		t.Errorf("expected message 'upload exceeds 10MB limit', got %s", err.Message)
+	}
+	if err.Retryable {
+		t.Error("payload too large should not be retryable")
+	}
+}
+
+func TestUnprocessableEntity(t *testing.T) {
+	err := UnprocessableEntity("semantic validation failed")
+
+	if err.Code != CodeUnprocessableEntity {
+		t.Errorf("expected code %s, got %s", CodeUnprocessableEntity, err.Code)
+	}
+	if err.Status != http.StatusUnprocessableEntity {
+		t.Errorf("expected status %d, got %d", http.StatusUnprocessableEntity, err.Status)
+	}
+	if err.Message != "semantic validation failed" {
+		t.Errorf("expected message 'semantic validation failed', got %s", err.Message)
+	}
+	if err.Retryable {
+		t.Error("unprocessable entity should not be retryable")
 	}
 }
 

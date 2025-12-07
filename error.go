@@ -107,8 +107,14 @@ func defaultMessage(code Code) string {
 		return "Forbidden"
 	case CodeNotFound:
 		return "Not found"
+	case CodeGone:
+		return "Resource no longer exists"
 	case CodeConflict:
 		return "Conflict"
+	case CodePayloadTooLarge:
+		return "Payload too large"
+	case CodeUnprocessableEntity:
+		return "Unprocessable entity"
 	case CodeRateLimited:
 		return "Rate limited"
 	case CodeTimeout, CodeDownstreamTimeout:
