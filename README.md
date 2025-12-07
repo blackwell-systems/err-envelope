@@ -268,11 +268,58 @@ curl http://localhost:8080/timeout
 
 ## Integration Patterns
 
-**`net/http`** (default): Use `errenvelope.Write(w, r, err)` and `errenvelope.TraceMiddleware(mux)`.
+### net/http (default)
 
-**Chi/Gin/Echo**: Use `From(err)` (or just call `Write`) in your error-handling middleware.
+```go
+mux := http.NewServeMux()
+mux.HandleFunc("/user", func(w http.ResponseWriter, r *http.Request) {
+    if err := validate(r); err != nil {
+        errenvelope.Write(w, r, err)
+        return
+    }
+})
+http.ListenAndServe(":8080", errenvelope.TraceMiddleware(mux))
+```
 
-**OpenAPI/TypeScript**: Use the included [JSON Schema](schema.json) to generate client types.
+### Chi
+
+```go
+import "github.com/blackwell-systems/err-envelope/integrations/chi"
+
+r := chi.NewRouter()
+r.Use(chi.Trace)  // Or use errenvelope.TraceMiddleware directly
+r.Get("/user", func(w http.ResponseWriter, r *http.Request) {
+    errenvelope.Write(w, r, errenvelope.NotFound("User not found"))
+})
+```
+
+### Gin
+
+```go
+import "github.com/blackwell-systems/err-envelope/integrations/gin"
+
+r := gin.Default()
+r.Use(gin.Trace())
+r.GET("/user", func(c *gin.Context) {
+    gin.Write(c, errenvelope.Unauthorized("Missing token"))
+})
+```
+
+### Echo
+
+```go
+import "github.com/blackwell-systems/err-envelope/integrations/echo"
+
+e := echo.New()
+e.Use(echo.Trace)
+e.GET("/user", func(c echo.Context) error {
+    return echo.Write(c, errenvelope.BadRequest("Invalid request"))
+})
+```
+
+### OpenAPI/TypeScript
+
+Use the included [JSON Schema](schema.json) to generate client types.
 
 ## Versioning
 
