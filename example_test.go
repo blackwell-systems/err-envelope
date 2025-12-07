@@ -62,15 +62,9 @@ func ExampleWrite_unauthorized() {
 // ExampleWrite_notFound demonstrates handling 404 errors.
 func ExampleWrite_notFound() {
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		userID := r.PathValue("id")
 		// Simulate user not found
-		if userID == "999" {
-			err := errenvelope.NotFound("User not found")
-			errenvelope.Write(w, r, err)
-			return
-		}
-
-		w.WriteHeader(http.StatusOK)
+		err := errenvelope.NotFound("User not found")
+		errenvelope.Write(w, r, err)
 	})
 
 	req := httptest.NewRequest("GET", "/users/999", nil)
