@@ -272,22 +272,34 @@ curl http://localhost:8080/timeout
 
 ```go
 mux := http.NewServeMux()
+
 mux.HandleFunc("/user", func(w http.ResponseWriter, r *http.Request) {
     if err := validate(r); err != nil {
         errenvelope.Write(w, r, err)
         return
     }
+
+    // ... success path
+    w.WriteHeader(http.StatusOK)
 })
-http.ListenAndServe(":8080", errenvelope.TraceMiddleware(mux))
+
+_ = http.ListenAndServe(":8080", errenvelope.TraceMiddleware(mux))
 ```
 
 ### Chi
 
+Chi is `net/http`-native, so you can use `errenvelope.TraceMiddleware` directly.
+The adapter exists for convenience and readability.
+
 ```go
-import "github.com/blackwell-systems/err-envelope/integrations/chi"
+import (
+    errchi "github.com/blackwell-systems/err-envelope/integrations/chi"
+    "github.com/go-chi/chi/v5"
+)
 
 r := chi.NewRouter()
-r.Use(chi.Trace)  // Or use errenvelope.TraceMiddleware directly
+r.Use(errchi.Trace)
+
 r.Get("/user", func(w http.ResponseWriter, r *http.Request) {
     errenvelope.Write(w, r, errenvelope.NotFound("User not found"))
 })
@@ -296,30 +308,42 @@ r.Get("/user", func(w http.ResponseWriter, r *http.Request) {
 ### Gin
 
 ```go
-import "github.com/blackwell-systems/err-envelope/integrations/gin"
+import (
+    errgin "github.com/blackwell-systems/err-envelope/integrations/gin"
+    "github.com/gin-gonic/gin"
+)
 
 r := gin.Default()
-r.Use(gin.Trace())
+r.Use(errgin.Trace())
+
 r.GET("/user", func(c *gin.Context) {
-    gin.Write(c, errenvelope.Unauthorized("Missing token"))
+    errgin.Write(c, errenvelope.Unauthorized("Missing token"))
 })
 ```
 
 ### Echo
 
 ```go
-import "github.com/blackwell-systems/err-envelope/integrations/echo"
+import (
+    errecho "github.com/blackwell-systems/err-envelope/integrations/echo"
+    "github.com/labstack/echo/v4"
+)
 
 e := echo.New()
-e.Use(echo.Trace)
+e.Use(errecho.Trace)
+
 e.GET("/user", func(c echo.Context) error {
-    return echo.Write(c, errenvelope.BadRequest("Invalid request"))
+    return errecho.Write(c, errenvelope.BadRequest("Invalid request"))
 })
 ```
 
-### OpenAPI/TypeScript
+### OpenAPI / TypeScript
 
-Use the included [JSON Schema](schema.json) to generate client types.
+Use the included [JSON Schema](schema.json) to:
+
+- Validate error contracts in CI
+- Generate client types
+- Document a shared error response model across services
 
 ## Versioning
 
