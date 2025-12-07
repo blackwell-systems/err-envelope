@@ -1,3 +1,8 @@
+// Package errenvelope provides a tiny, framework-agnostic
+// server-side HTTP error envelope for Go services.
+// It standardizes code/message/details/trace_id/retryable
+// and includes helpers for validation, auth, timeouts,
+// and downstream errors.
 package errenvelope
 
 import (
