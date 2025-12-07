@@ -9,6 +9,23 @@ import (
 	"time"
 )
 
+func TestBadRequest(t *testing.T) {
+	err := BadRequest("malformed JSON")
+
+	if err.Code != CodeBadRequest {
+		t.Errorf("expected code %s, got %s", CodeBadRequest, err.Code)
+	}
+	if err.Status != http.StatusBadRequest {
+		t.Errorf("expected status %d, got %d", http.StatusBadRequest, err.Status)
+	}
+	if err.Message != "malformed JSON" {
+		t.Errorf("expected message 'malformed JSON', got %s", err.Message)
+	}
+	if err.Retryable {
+		t.Error("bad request should not be retryable")
+	}
+}
+
 func TestValidation(t *testing.T) {
 	fields := FieldErrors{
 		"email": "invalid format",

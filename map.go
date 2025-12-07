@@ -15,6 +15,12 @@ type ValidationDetails struct {
 	Fields FieldErrors `json:"fields"`
 }
 
+// BadRequest creates a generic bad request error (400).
+func BadRequest(msg string) *Error {
+	return New(CodeBadRequest, http.StatusBadRequest, msg).
+		WithRetryable(false)
+}
+
 // Validation creates a validation error with field-level details.
 func Validation(fields FieldErrors) *Error {
 	return New(CodeValidationFailed, http.StatusBadRequest, "").
