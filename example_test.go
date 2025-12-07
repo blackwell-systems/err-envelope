@@ -122,8 +122,8 @@ func ExampleTraceMiddleware() {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/api/user", func(w http.ResponseWriter, r *http.Request) {
-		// Trace ID is available in context
-		traceID := errenvelope.GetTraceID(r.Context())
+		// Trace ID is available from request
+		traceID := errenvelope.TraceIDFromRequest(r)
 		fmt.Printf("Trace ID present: %v\n", traceID != "")
 
 		w.WriteHeader(http.StatusOK)
