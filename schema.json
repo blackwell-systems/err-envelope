@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "errenvelope.Error",
+  "description": "Structured error envelope for HTTP APIs",
+  "type": "object",
+  "required": ["code", "message", "retryable"],
+  "properties": {
+    "code": {
+      "type": "string",
+      "description": "Machine-readable error code"
+    },
+    "message": {
+      "type": "string",
+      "description": "Human-readable error message"
+    },
+    "details": {
+      "description": "Additional structured error details"
+    },
+    "trace_id": {
+      "type": "string",
+      "description": "Request trace ID for debugging"
+    },
+    "retryable": {
+      "type": "boolean",
+      "description": "Whether the client should retry the request"
+    }
+  },
+  "additionalProperties": false
+}
