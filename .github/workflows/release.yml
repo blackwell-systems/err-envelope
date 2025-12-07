@@ -1,0 +1,78 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.23'
+
+    - name: Tidy dependencies
+      run: go mod tidy
+
+    - name: Run tests
+      run: go test -v ./...
+
+    - name: Build
+      run: go build -v ./...
+
+    - name: Extract version
+      id: version
+      run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+    - name: Generate release notes
+      id: notes
+      run: |
+        cat > release-notes.md <<'EOF'
+        ## Installation
+
+        ```bash
+        go get github.com/blackwell-systems/err-envelope@${{ steps.version.outputs.VERSION }}
+        ```
+
+        ## Documentation
+
+        - [Go Reference](https://pkg.go.dev/github.com/blackwell-systems/err-envelope@${{ steps.version.outputs.VERSION }})
+        - [README](https://github.com/blackwell-systems/err-envelope#readme)
+        - [Examples](https://pkg.go.dev/github.com/blackwell-systems/err-envelope@${{ steps.version.outputs.VERSION }}#pkg-examples)
+
+        ## What's Included
+
+        - Structured JSON error responses (code/message/details/trace_id/retryable)
+        - Machine-readable error codes for client-side handling
+        - Trace ID support for request correlation and debugging
+        - Framework integrations (chi, gin, echo)
+        - Comprehensive examples and documentation
+        - JSON Schema for contract testing and type generation
+
+        ## Versioning
+
+        This library follows semantic versioning. The error envelope fields (`code`, `message`, `details`, `trace_id`, `retryable`) will not break in minor releases.
+
+        Error codes are stable and will never change. Messages may evolve for clarity.
+        EOF
+
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v2
+      with:
+        body_path: release-notes.md
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
