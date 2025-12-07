@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	errenvelope "github.com/blackwell-systems/err-envelope"
-	"github.com/labstack/echo/v4"
+	echofw "github.com/labstack/echo/v4"
 )
 
 // Trace adapts err-envelope trace middleware to Echo's middleware interface.
@@ -22,8 +22,8 @@ import (
 //	    // ...
 //	    return nil
 //	})
-func Trace(next echo.HandlerFunc) echo.HandlerFunc {
-	return func(c echo.Context) error {
+func Trace(next echofw.HandlerFunc) echofw.HandlerFunc {
+	return func(c echofw.Context) error {
 		// Wrap with err-envelope trace middleware
 		handler := errenvelope.TraceMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			// Update context with traced request
@@ -50,7 +50,7 @@ func Trace(next echo.HandlerFunc) echo.HandlerFunc {
 //	    // ...
 //	    return nil
 //	})
-func Write(c echo.Context, err error) error {
+func Write(c echofw.Context, err error) error {
 	errenvelope.Write(c.Response().Writer, c.Request(), err)
 	return nil
 }

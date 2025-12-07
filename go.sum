@@ -1,0 +1,6 @@
+github.com/gin-gonic/gin v1.10.0 h1:nTuyha1TYqgedzytsKYqna+DfLos46nTv2ygFy86HFU=
+github.com/gin-gonic/gin v1.10.0/go.mod h1:4PMNQiOhvDRa013RKVbsiNwoyezlm2rm0uX/T7kzp5Y=
+github.com/go-chi/chi/v5 v5.2.0 h1:3SgrzXAK4KoScHLjDEq1KXd8RwKP7Pg8xC1zCx8aBaE=
+github.com/go-chi/chi/v5 v5.2.0/go.mod h1:c1/f7bNDN4iIrVJhU+BxYvVJLUj6JjhqfjzpMlqF1VI=
+github.com/labstack/echo/v4 v4.13.3 h1:VmYnvVd8qDNaJVBH5kVlBQs59N8LVAiMzPvqJFLmYfM=
+github.com/labstack/echo/v4 v4.13.3/go.mod h1:+K5hVKSIoS+qHN3R1gDFLh6qfA3wK7Jqg1LIKKJxH5o=
