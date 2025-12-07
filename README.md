@@ -1,8 +1,9 @@
 # err-envelope
 
 [![Blackwell Systems™](https://raw.githubusercontent.com/blackwell-systems/blackwell-docs-theme/main/badge-trademark.svg)](https://github.com/blackwell-systems)
+[![Go Reference](https://pkg.go.dev/badge/github.com/blackwell-systems/err-envelope.svg)](https://pkg.go.dev/github.com/blackwell-systems/err-envelope)
+[![CI](https://github.com/blackwell-systems/err-envelope/actions/workflows/ci.yml/badge.svg)](https://github.com/blackwell-systems/err-envelope/actions/workflows/ci.yml)
 [![Go Report Card](https://goreportcard.com/badge/github.com/blackwell-systems/err-envelope)](https://goreportcard.com/report/github.com/blackwell-systems/err-envelope)
-[![Go Install](https://img.shields.io/badge/go_install-@latest-00ADD8?logo=go&logoColor=white)](https://pkg.go.dev/github.com/blackwell-systems/err-envelope)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Sponsor](https://img.shields.io/badge/Sponsor-Buy%20Me%20a%20Coffee-yellow?logo=buy-me-a-coffee&logoColor=white)](https://buymeacoffee.com/blackwellsystems)
 
@@ -53,7 +54,7 @@ package main
 
 import (
     "net/http"
-    "github.com/blackwell-systems/err-envelope"
+    errenvelope "github.com/blackwell-systems/err-envelope"
 )
 
 func main() {
@@ -234,13 +235,34 @@ http.ListenAndServe(":8080", handler)
 
 ## Comparison
 
-| Feature | err-envelope | Raw JSON | Problem Details (RFC 7807) |
+| Feature | err-envelope | Raw JSON | Problem Details (RFC 9457) |
 |---------|--------------|----------|----------------------------|
 | Stable codes | ✅ | ❌ | ✅ |
 | Retryable flag | ✅ | ❌ | ❌ |
 | Trace ID | ✅ | ❌ | ❌ |
 | Stdlib only | ✅ | ✅ | ❌ (needs library) |
 | Learning curve | Low | None | Medium |
+
+If you already use Problem Details (RFC 9457), you can map between formats at the edge.
+
+## JSON Schema
+
+A [JSON Schema](schema.json) is included for client tooling and contract testing:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "errenvelope.Error",
+  "required": ["code", "message", "retryable"],
+  "properties": {
+    "code": { "type": "string" },
+    "message": { "type": "string" },
+    "retryable": { "type": "boolean" }
+  }
+}
+```
+
+Use this to validate responses, generate TypeScript types, or document your API.
 
 ## Examples
 
