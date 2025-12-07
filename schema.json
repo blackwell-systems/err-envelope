@@ -14,6 +14,7 @@
       "description": "Human-readable error message"
     },
     "details": {
+      "type": "object",
       "description": "Additional structured error details"
     },
     "trace_id": {

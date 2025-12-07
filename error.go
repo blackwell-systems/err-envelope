@@ -8,7 +8,9 @@ package errenvelope
 import (
 	"errors"
 	"fmt"
+	"log/slog"
 	"net/http"
+	"time"
 )
 
 // Error is a structured error envelope for HTTP APIs.
@@ -20,8 +22,9 @@ type Error struct {
 	Retryable bool   `json:"retryable"`
 
 	// Not serialized:
-	Status int   `json:"-"`
-	Cause  error `json:"-"`
+	Status     int           `json:"-"`
+	Cause      error         `json:"-"`
+	RetryAfter time.Duration `json:"-"` // Duration to wait before retrying
 }
 
 func (e *Error) Error() string {
@@ -84,6 +87,39 @@ func (e *Error) WithStatus(status int) *Error {
 		e.Status = status
 	}
 	return e
+}
+
+// WithRetryAfter sets the retry-after duration for rate-limited responses.
+// The duration will be sent as a Retry-After header (in seconds).
+func (e *Error) WithRetryAfter(d time.Duration) *Error {
+	e.RetryAfter = d
+	return e
+}
+
+// LogValue implements slog.LogValuer for structured logging.
+func (e *Error) LogValue() slog.Value {
+	if e == nil {
+		return slog.GroupValue()
+	}
+	attrs := []slog.Attr{
+		slog.String("code", string(e.Code)),
+		slog.String("message", e.Message),
+		slog.Int("status", e.Status),
+		slog.Bool("retryable", e.Retryable),
+	}
+	if e.TraceID != "" {
+		attrs = append(attrs, slog.String("trace_id", e.TraceID))
+	}
+	if e.Details != nil {
+		attrs = append(attrs, slog.Any("details", e.Details))
+	}
+	if e.RetryAfter > 0 {
+		attrs = append(attrs, slog.Duration("retry_after", e.RetryAfter))
+	}
+	if e.Cause != nil {
+		attrs = append(attrs, slog.String("cause", e.Cause.Error()))
+	}
+	return slog.GroupValue(attrs...)
 }
 
 // Is checks if an error has the given code.

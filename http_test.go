@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 )
 
 func TestWriteWithError(t *testing.T) {
@@ -226,5 +227,56 @@ func TestWriteRetryableFlag(t *testing.T) {
 
 	if !response.Retryable {
 		t.Error("rate limited should be retryable")
+	}
+}
+func TestWriteWithRetryAfter(t *testing.T) {
+	err := RateLimited("too many requests").WithRetryAfter(60 * time.Second)
+
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest("GET", "/test", nil)
+
+	Write(w, r, err)
+
+	// Check Retry-After header
+	retryAfter := w.Header().Get("Retry-After")
+	if retryAfter != "60" {
+		t.Errorf("expected Retry-After 60, got %s", retryAfter)
+	}
+
+	// Check status code
+	if w.Code != http.StatusTooManyRequests {
+		t.Errorf("expected status %d, got %d", http.StatusTooManyRequests, w.Code)
+	}
+}
+
+func TestWriteWithRetryAfterSubSecond(t *testing.T) {
+	// Test that sub-second durations are rounded up to 1 second
+	err := RateLimited("too many requests").WithRetryAfter(500 * time.Millisecond)
+
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest("GET", "/test", nil)
+
+	Write(w, r, err)
+
+	// Should be rounded up to 1 second minimum
+	retryAfter := w.Header().Get("Retry-After")
+	if retryAfter != "1" {
+		t.Errorf("expected Retry-After 1 (minimum), got %s", retryAfter)
+	}
+}
+
+func TestWriteWithoutRetryAfter(t *testing.T) {
+	// Error without RetryAfter should not set the header
+	err := RateLimited("too many requests")
+
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest("GET", "/test", nil)
+
+	Write(w, r, err)
+
+	// Retry-After header should not be set
+	retryAfter := w.Header().Get("Retry-After")
+	if retryAfter != "" {
+		t.Errorf("expected no Retry-After header, got %s", retryAfter)
 	}
 }

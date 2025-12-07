@@ -1,9 +1,12 @@
 package errenvelope
 
 import (
+	"bytes"
 	"errors"
+	"log/slog"
 	"net/http"
 	"testing"
+	"time"
 )
 
 func TestNew(t *testing.T) {
@@ -154,5 +157,58 @@ func TestChaining(t *testing.T) {
 	}
 	if err.Retryable {
 		t.Error("retryable should be false")
+	}
+}
+func TestWithRetryAfter(t *testing.T) {
+	err := RateLimited("too many requests").WithRetryAfter(30 * time.Second)
+
+	if err.RetryAfter != 30*time.Second {
+		t.Errorf("expected retry after 30s, got %v", err.RetryAfter)
+	}
+	if err.Code != CodeRateLimited {
+		t.Errorf("expected code %s, got %s", CodeRateLimited, err.Code)
+	}
+	if !err.Retryable {
+		t.Error("rate limited should be retryable")
+	}
+}
+
+func TestLogValue(t *testing.T) {
+	cause := errors.New("database timeout")
+	err := Internal("processing failed").
+		WithDetails(map[string]string{"request_id": "123"}).
+		WithTraceID("trace-abc").
+		WithRetryAfter(10 * time.Second)
+	err.Cause = cause
+
+	// Test that LogValue returns a valid slog.Value
+	logVal := err.LogValue()
+	if logVal.Kind() != slog.KindGroup {
+		t.Error("LogValue should return a group")
+	}
+
+	// Test with slog to ensure it integrates correctly
+	var buf bytes.Buffer
+	logger := slog.New(slog.NewJSONHandler(&buf, nil))
+	logger.Info("error occurred", "error", err)
+
+	// The buffer should contain JSON output with error fields
+	output := buf.String()
+	if !bytes.Contains([]byte(output), []byte("INTERNAL")) {
+		t.Error("expected code in log output")
+	}
+	if !bytes.Contains([]byte(output), []byte("processing failed")) {
+		t.Error("expected message in log output")
+	}
+	if !bytes.Contains([]byte(output), []byte("trace-abc")) {
+		t.Error("expected trace_id in log output")
+	}
+}
+
+func TestLogValueNil(t *testing.T) {
+	var err *Error
+	logVal := err.LogValue()
+	if logVal.Kind() != slog.KindGroup {
+		t.Error("LogValue on nil should return empty group")
 	}
 }

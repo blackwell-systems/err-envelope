@@ -2,6 +2,7 @@ package errenvelope
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 )
 
@@ -25,6 +26,15 @@ func Write(w http.ResponseWriter, r *http.Request, err error) {
 
 	if e.TraceID != "" {
 		w.Header().Set(HeaderTraceID, e.TraceID)
+	}
+
+	// Set Retry-After header if specified (rate limiting, unavailable, etc.)
+	if e.RetryAfter > 0 {
+		seconds := int(e.RetryAfter.Seconds())
+		if seconds < 1 {
+			seconds = 1 // Minimum 1 second
+		}
+		w.Header().Set("Retry-After", fmt.Sprintf("%d", seconds))
 	}
 
 	status := e.Status
