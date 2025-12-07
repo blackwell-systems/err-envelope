@@ -99,6 +99,10 @@ $ curl http://localhost:8080/user
 ### Common Constructors
 
 ```go
+// Generic errors
+errenvelope.Internal("Database connection failed")   // 500
+errenvelope.BadRequest("Invalid JSON in body")       // 400
+
 // Validation errors (400)
 errenvelope.Validation(errenvelope.FieldErrors{
     "email": "invalid format",
@@ -106,23 +110,26 @@ errenvelope.Validation(errenvelope.FieldErrors{
 })
 
 // Auth errors
-errenvelope.Unauthorized("Missing token")    // 401
-errenvelope.Forbidden("Insufficient permissions") // 403
+errenvelope.Unauthorized("Missing token")             // 401
+errenvelope.Forbidden("Insufficient permissions")     // 403
 
 // Resource errors
-errenvelope.NotFound("User not found")          // 404
-errenvelope.MethodNotAllowed("POST not allowed") // 405
-errenvelope.RequestTimeout("Client timeout")     // 408
-errenvelope.Conflict("Email already exists")     // 409
+errenvelope.NotFound("User not found")                // 404
+errenvelope.MethodNotAllowed("POST not allowed")      // 405
+errenvelope.RequestTimeout("Client timeout")          // 408
+errenvelope.Conflict("Email already exists")          // 409
+errenvelope.Gone("Resource permanently deleted")      // 410
+errenvelope.PayloadTooLarge("Upload exceeds 10MB")    // 413
+errenvelope.UnprocessableEntity("Invalid data format") // 422
 
 // Infrastructure errors
-errenvelope.Timeout("Database query timed out")      // 504
-errenvelope.Unavailable("Service temporarily down")  // 503
-errenvelope.RateLimited("Too many requests")        // 429
+errenvelope.RateLimited("Too many requests")          // 429
+errenvelope.Unavailable("Service temporarily down")   // 503
+errenvelope.Timeout("Database query timed out")       // 504
 
 // Downstream errors
-errenvelope.Downstream("payments", err)              // 502
-errenvelope.DownstreamTimeout("payments", err)       // 504
+errenvelope.Downstream("payments", err)               // 502
+errenvelope.DownstreamTimeout("payments", err)        // 504
 ```
 
 ### Custom Errors
@@ -146,6 +153,9 @@ err = err.WithTraceID("abc123")
 
 // Override retryable
 err = err.WithRetryable(true)
+
+// Set retry-after duration (for rate limiting, unavailable, etc.)
+err = err.WithRetryAfter(60 * time.Second)
 ```
 
 ### Writing Responses
@@ -157,11 +167,14 @@ errenvelope.Write(w, r, err)
 // Automatically handles:
 // - Sets Content-Type: application/json
 // - Sets X-Request-Id header (if trace ID present)
+// - Sets Retry-After header (if retry duration present)
 // - Sets correct HTTP status
 // - Encodes error as JSON
 ```
 
-If a trace ID is present in the error, `err-envelope` also sets the `X-Request-Id` header for easy log correlation.
+**Headers set automatically:**
+- `X-Request-Id`: Trace ID for log correlation (if present)
+- `Retry-After`: Duration in seconds for retryable errors (if specified via `WithRetryAfter()`)
 
 ### Mapping Arbitrary Errors
 
@@ -193,6 +206,30 @@ http.ListenAndServe(":8080", handler)
 // Adds to context for downstream access
 ```
 
+### Structured Logging (slog)
+
+Errors implement `slog.LogValuer` for seamless structured logging integration (Go 1.21+):
+
+```go
+import "log/slog"
+
+err := Internal("database connection failed").
+    WithTraceID("abc123").
+    WithDetails(map[string]string{"database": "postgres"})
+
+// Log with slog - all error fields included automatically
+slog.Info("request failed", "error", err)
+// Output: {"level":"INFO","msg":"request failed","error":{"code":"INTERNAL","message":"database connection failed","status":500,"retryable":false,"trace_id":"abc123","details":{"database":"postgres"}}}
+
+// Works with structured logging context
+slog.Error("processing error",
+    "error", err,
+    "user_id", 123,
+    "path", r.URL.Path)
+```
+
+The `LogValue()` method automatically includes: code, message, status, retryable, trace_id, details, retry_after, and cause.
+
 ## Error Codes
 
 | Code | HTTP Status | Retryable | Use Case |
@@ -206,6 +243,9 @@ http.ListenAndServe(":8080", handler)
 | `METHOD_NOT_ALLOWED` | 405 | No | Invalid HTTP method |
 | `REQUEST_TIMEOUT` | 408 | Yes | Client timeout |
 | `CONFLICT` | 409 | No | State conflict (duplicate) |
+| `GONE` | 410 | No | Resource permanently deleted |
+| `PAYLOAD_TOO_LARGE` | 413 | No | Request body too large |
+| `UNPROCESSABLE_ENTITY` | 422 | No | Semantic validation failed |
 | `RATE_LIMITED` | 429 | Yes | Too many requests |
 | `CANCELED` | 499 | No | Client canceled request |
 | `UNAVAILABLE` | 503 | Yes | Service temporarily down |
