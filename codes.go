@@ -5,12 +5,14 @@ type Code string
 
 const (
 	// Generic
-	CodeInternal    Code = "INTERNAL"
-	CodeBadRequest  Code = "BAD_REQUEST"
-	CodeNotFound    Code = "NOT_FOUND"
-	CodeConflict    Code = "CONFLICT"
-	CodeRateLimited Code = "RATE_LIMITED"
-	CodeUnavailable Code = "UNAVAILABLE"
+	CodeInternal       Code = "INTERNAL"
+	CodeBadRequest     Code = "BAD_REQUEST"
+	CodeNotFound       Code = "NOT_FOUND"
+	CodeMethodNotAllowed Code = "METHOD_NOT_ALLOWED"
+	CodeConflict       Code = "CONFLICT"
+	CodeRequestTimeout Code = "REQUEST_TIMEOUT"
+	CodeRateLimited    Code = "RATE_LIMITED"
+	CodeUnavailable    Code = "UNAVAILABLE"
 
 	// Validation / auth
 	CodeValidationFailed Code = "VALIDATION_FAILED"

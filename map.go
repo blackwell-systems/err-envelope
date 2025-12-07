@@ -46,6 +46,19 @@ func Conflict(msg string) *Error {
 		WithRetryable(false)
 }
 
+// MethodNotAllowed creates a method not allowed error (405).
+func MethodNotAllowed(msg string) *Error {
+	return New(CodeMethodNotAllowed, http.StatusMethodNotAllowed, msg).
+		WithRetryable(false)
+}
+
+// RequestTimeout creates a request timeout error (408).
+// This is for client-side timeouts, distinct from 504 Gateway Timeout.
+func RequestTimeout(msg string) *Error {
+	return New(CodeRequestTimeout, http.StatusRequestTimeout, msg).
+		WithRetryable(true)
+}
+
 // RateLimited creates a rate limit error (429).
 func RateLimited(msg string) *Error {
 	return New(CodeRateLimited, http.StatusTooManyRequests, msg).

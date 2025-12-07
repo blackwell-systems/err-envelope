@@ -114,8 +114,10 @@ errenvelope.Unauthorized("Missing token")    // 401
 errenvelope.Forbidden("Insufficient permissions") // 403
 
 // Resource errors
-errenvelope.NotFound("User not found")       // 404
-errenvelope.Conflict("Email already exists") // 409
+errenvelope.NotFound("User not found")          // 404
+errenvelope.MethodNotAllowed("POST not allowed") // 405
+errenvelope.RequestTimeout("Client timeout")     // 408
+errenvelope.Conflict("Email already exists")     // 409
 
 // Infrastructure errors
 errenvelope.Timeout("Database query timed out")      // 504
@@ -203,11 +205,13 @@ http.ListenAndServe(":8080", handler)
 | `UNAUTHORIZED` | 401 | No | Missing/invalid auth |
 | `FORBIDDEN` | 403 | No | Insufficient permissions |
 | `NOT_FOUND` | 404 | No | Resource doesn't exist |
+| `METHOD_NOT_ALLOWED` | 405 | No | Invalid HTTP method |
+| `REQUEST_TIMEOUT` | 408 | Yes | Client timeout |
 | `CONFLICT` | 409 | No | State conflict (duplicate) |
-| `TIMEOUT` | 504 | Yes | Request timeout |
-| `CANCELED` | 499 | No | Client canceled request |
 | `RATE_LIMITED` | 429 | Yes | Too many requests |
+| `CANCELED` | 499 | No | Client canceled request |
 | `UNAVAILABLE` | 503 | Yes | Service temporarily down |
+| `TIMEOUT` | 504 | Yes | Gateway timeout |
 | `DOWNSTREAM_ERROR` | 502 | Yes | Upstream service failed |
 | `DOWNSTREAM_TIMEOUT` | 504 | Yes | Upstream service timeout |
 

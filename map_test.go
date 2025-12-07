@@ -97,6 +97,34 @@ func TestConflict(t *testing.T) {
 	}
 }
 
+func TestMethodNotAllowed(t *testing.T) {
+	err := MethodNotAllowed("POST not allowed")
+
+	if err.Code != CodeMethodNotAllowed {
+		t.Errorf("expected code %s, got %s", CodeMethodNotAllowed, err.Code)
+	}
+	if err.Status != http.StatusMethodNotAllowed {
+		t.Errorf("expected status %d, got %d", http.StatusMethodNotAllowed, err.Status)
+	}
+	if err.Retryable {
+		t.Error("method not allowed should not be retryable")
+	}
+}
+
+func TestRequestTimeout(t *testing.T) {
+	err := RequestTimeout("client timeout")
+
+	if err.Code != CodeRequestTimeout {
+		t.Errorf("expected code %s, got %s", CodeRequestTimeout, err.Code)
+	}
+	if err.Status != http.StatusRequestTimeout {
+		t.Errorf("expected status %d, got %d", http.StatusRequestTimeout, err.Status)
+	}
+	if !err.Retryable {
+		t.Error("request timeout should be retryable")
+	}
+}
+
 func TestRateLimited(t *testing.T) {
 	err := RateLimited("too many requests")
 
