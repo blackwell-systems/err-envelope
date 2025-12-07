@@ -160,6 +160,8 @@ errenvelope.Write(w, r, err)
 // - Encodes error as JSON
 ```
 
+If a trace ID is present in the error, `err-envelope` also sets the `X-Request-Id` header for easy log correlation.
+
 ### Mapping Arbitrary Errors
 
 ```go
@@ -222,7 +224,7 @@ http.ListenAndServe(":8080", handler)
 
 ## Compatibility
 
-If you already use RFC 7807 Problem Details, this can coexist—map between formats at the edge.
+If you already use Problem Details (RFC 9457), this can coexist—map between formats at the edge.
 
 ## JSON Schema
 
@@ -236,6 +238,8 @@ A [JSON Schema](schema.json) is included for client tooling and contract testing
   "properties": {
     "code": { "type": "string" },
     "message": { "type": "string" },
+    "details": { "type": "object" },
+    "trace_id": { "type": "string" },
     "retryable": { "type": "boolean" }
   }
 }
@@ -266,7 +270,7 @@ curl http://localhost:8080/timeout
 
 **`net/http`** (default): Use `errenvelope.Write(w, r, err)` and `errenvelope.TraceMiddleware(mux)`.
 
-**Chi/Gin/Echo**: Wrap errors in your middleware layer before writing responses.
+**Chi/Gin/Echo**: Use `From(err)` (or just call `Write`) in your error-handling middleware.
 
 **OpenAPI/TypeScript**: Use the included [JSON Schema](schema.json) to generate client types.
 
