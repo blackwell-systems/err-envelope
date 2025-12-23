@@ -3,6 +3,7 @@ package errenvelope
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net"
 	"net/http"
 )
@@ -21,10 +22,20 @@ func Internal(msg string) *Error {
 		WithRetryable(false)
 }
 
+// Internalf creates an internal server error (500) with a formatted message.
+func Internalf(format string, args ...any) *Error {
+	return Internal(fmt.Sprintf(format, args...))
+}
+
 // BadRequest creates a generic bad request error (400).
 func BadRequest(msg string) *Error {
 	return New(CodeBadRequest, http.StatusBadRequest, msg).
 		WithRetryable(false)
+}
+
+// BadRequestf creates a generic bad request error (400) with a formatted message.
+func BadRequestf(format string, args ...any) *Error {
+	return BadRequest(fmt.Sprintf(format, args...))
 }
 
 // Validation creates a validation error with field-level details.
@@ -40,10 +51,20 @@ func Unauthorized(msg string) *Error {
 		WithRetryable(false)
 }
 
+// Unauthorizedf creates an unauthorized error (401) with a formatted message.
+func Unauthorizedf(format string, args ...any) *Error {
+	return Unauthorized(fmt.Sprintf(format, args...))
+}
+
 // Forbidden creates a forbidden error (403).
 func Forbidden(msg string) *Error {
 	return New(CodeForbidden, http.StatusForbidden, msg).
 		WithRetryable(false)
+}
+
+// Forbiddenf creates a forbidden error (403) with a formatted message.
+func Forbiddenf(format string, args ...any) *Error {
+	return Forbidden(fmt.Sprintf(format, args...))
 }
 
 // NotFound creates a not found error (404).
@@ -52,10 +73,20 @@ func NotFound(msg string) *Error {
 		WithRetryable(false)
 }
 
+// NotFoundf creates a not found error (404) with a formatted message.
+func NotFoundf(format string, args ...any) *Error {
+	return NotFound(fmt.Sprintf(format, args...))
+}
+
 // Conflict creates a conflict error (409).
 func Conflict(msg string) *Error {
 	return New(CodeConflict, http.StatusConflict, msg).
 		WithRetryable(false)
+}
+
+// Conflictf creates a conflict error (409) with a formatted message.
+func Conflictf(format string, args ...any) *Error {
+	return Conflict(fmt.Sprintf(format, args...))
 }
 
 // MethodNotAllowed creates a method not allowed error (405).
@@ -102,10 +133,20 @@ func Timeout(msg string) *Error {
 		WithRetryable(true)
 }
 
+// Timeoutf creates a timeout error (504) with a formatted message.
+func Timeoutf(format string, args ...any) *Error {
+	return Timeout(fmt.Sprintf(format, args...))
+}
+
 // Unavailable creates an unavailable error (503).
 func Unavailable(msg string) *Error {
 	return New(CodeUnavailable, http.StatusServiceUnavailable, msg).
 		WithRetryable(true)
+}
+
+// Unavailablef creates an unavailable error (503) with a formatted message.
+func Unavailablef(format string, args ...any) *Error {
+	return Unavailable(fmt.Sprintf(format, args...))
 }
 
 // Downstream creates an error for downstream service failures (502).

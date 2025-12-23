@@ -6,6 +6,7 @@
 package errenvelope
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -39,6 +40,22 @@ func (e *Error) Error() string {
 
 func (e *Error) Unwrap() error { return e.Cause }
 
+// MarshalJSON implements custom JSON serialization to include retry_after as a human-readable string.
+// When RetryAfter is set, it appears in the JSON response as "retry_after": "30s" or "5m0s".
+func (e *Error) MarshalJSON() ([]byte, error) {
+	type Alias Error
+	aux := &struct {
+		*Alias
+		RetryAfterStr string `json:"retry_after,omitempty"`
+	}{
+		Alias: (*Alias)(e),
+	}
+	if e.RetryAfter > 0 {
+		aux.RetryAfterStr = e.RetryAfter.String()
+	}
+	return json.Marshal(aux)
+}
+
 // New creates a new Error with the given code, HTTP status, and message.
 // If status is 0, defaults to 500. If message is empty, uses a default.
 func New(code Code, status int, msg string) *Error {
@@ -61,6 +78,18 @@ func Wrap(code Code, status int, msg string, cause error) *Error {
 	e := New(code, status, msg)
 	e.Cause = cause
 	return e
+}
+
+// Newf creates a new Error with a formatted message.
+// Mirrors fmt.Errorf ergonomics for creating errors with interpolated values.
+func Newf(code Code, status int, format string, args ...any) *Error {
+	return New(code, status, fmt.Sprintf(format, args...))
+}
+
+// Wrapf creates a new Error that wraps an underlying cause with a formatted message.
+// Mirrors fmt.Errorf ergonomics while preserving error chain.
+func Wrapf(code Code, status int, format string, cause error, args ...any) *Error {
+	return Wrap(code, status, fmt.Sprintf(format, args...), cause)
 }
 
 // WithDetails adds structured details to the error.

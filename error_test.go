@@ -2,6 +2,7 @@ package errenvelope
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"log/slog"
 	"net/http"
@@ -246,5 +247,175 @@ func TestLogValueNil(t *testing.T) {
 	logVal := err.LogValue()
 	if logVal.Kind() != slog.KindGroup {
 		t.Error("LogValue on nil should return empty group")
+	}
+}
+
+func TestNewf(t *testing.T) {
+	userID := "12345"
+	err := Newf(CodeNotFound, http.StatusNotFound, "user %s not found", userID)
+	
+	expected := "user 12345 not found"
+	if err.Message != expected {
+		t.Errorf("expected message %q, got %q", expected, err.Message)
+	}
+	if err.Code != CodeNotFound {
+		t.Errorf("expected code %s, got %s", CodeNotFound, err.Code)
+	}
+	if err.Status != http.StatusNotFound {
+		t.Errorf("expected status %d, got %d", http.StatusNotFound, err.Status)
+	}
+}
+
+func TestWrapf(t *testing.T) {
+	cause := errors.New("connection refused")
+	host := "db.example.com"
+	err := Wrapf(CodeInternal, http.StatusInternalServerError, "failed to connect to %s", cause, host)
+	
+	expected := "failed to connect to db.example.com"
+	if err.Message != expected {
+		t.Errorf("expected message %q, got %q", expected, err.Message)
+	}
+	if err.Cause != cause {
+		t.Error("expected cause to be set")
+	}
+	
+	unwrapped := errors.Unwrap(err)
+	if unwrapped != cause {
+		t.Error("Unwrap should return the cause")
+	}
+}
+
+func TestMarshalJSON(t *testing.T) {
+	tests := []struct {
+		name          string
+		err           *Error
+		wantRetryStr  string
+		shouldContain bool
+	}{
+		{
+			name:          "with retry_after",
+			err:           RateLimited("too many requests").WithRetryAfter(30 * time.Second),
+			wantRetryStr:  "30s",
+			shouldContain: true,
+		},
+		{
+			name:          "with longer retry_after",
+			err:           Unavailable("maintenance").WithRetryAfter(5 * time.Minute),
+			wantRetryStr:  "5m0s",
+			shouldContain: true,
+		},
+		{
+			name:          "without retry_after",
+			err:           NotFound("user not found"),
+			wantRetryStr:  "",
+			shouldContain: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			data, err := json.Marshal(tt.err)
+			if err != nil {
+				t.Fatalf("failed to marshal: %v", err)
+			}
+
+			var result map[string]any
+			if err := json.Unmarshal(data, &result); err != nil {
+				t.Fatalf("failed to unmarshal: %v", err)
+			}
+
+			retryAfter, hasRetryAfter := result["retry_after"]
+			if tt.shouldContain {
+				if !hasRetryAfter {
+					t.Error("expected retry_after field in JSON")
+				}
+				if retryAfter != tt.wantRetryStr {
+					t.Errorf("expected retry_after %q, got %q", tt.wantRetryStr, retryAfter)
+				}
+			} else {
+				if hasRetryAfter {
+					t.Error("expected no retry_after field in JSON")
+				}
+			}
+
+			if result["code"] != string(tt.err.Code) {
+				t.Errorf("expected code %s, got %v", tt.err.Code, result["code"])
+			}
+			if result["message"] != tt.err.Message {
+				t.Errorf("expected message %s, got %v", tt.err.Message, result["message"])
+			}
+			if result["retryable"] != tt.err.Retryable {
+				t.Errorf("expected retryable %v, got %v", tt.err.Retryable, result["retryable"])
+			}
+		})
+	}
+}
+
+func TestFormattedHelpers(t *testing.T) {
+	tests := []struct {
+		name     string
+		err      *Error
+		wantMsg  string
+		wantCode Code
+	}{
+		{
+			name:     "Internalf",
+			err:      Internalf("database %s failed", "postgres"),
+			wantMsg:  "database postgres failed",
+			wantCode: CodeInternal,
+		},
+		{
+			name:     "BadRequestf",
+			err:      BadRequestf("invalid email: %s", "not-an-email"),
+			wantMsg:  "invalid email: not-an-email",
+			wantCode: CodeBadRequest,
+		},
+		{
+			name:     "NotFoundf",
+			err:      NotFoundf("user %d not found", 123),
+			wantMsg:  "user 123 not found",
+			wantCode: CodeNotFound,
+		},
+		{
+			name:     "Unauthorizedf",
+			err:      Unauthorizedf("missing header: %s", "Authorization"),
+			wantMsg:  "missing header: Authorization",
+			wantCode: CodeUnauthorized,
+		},
+		{
+			name:     "Forbiddenf",
+			err:      Forbiddenf("insufficient permissions for %s", "admin"),
+			wantMsg:  "insufficient permissions for admin",
+			wantCode: CodeForbidden,
+		},
+		{
+			name:     "Conflictf",
+			err:      Conflictf("email %s already exists", "test@example.com"),
+			wantMsg:  "email test@example.com already exists",
+			wantCode: CodeConflict,
+		},
+		{
+			name:     "Timeoutf",
+			err:      Timeoutf("query exceeded %dms", 5000),
+			wantMsg:  "query exceeded 5000ms",
+			wantCode: CodeTimeout,
+		},
+		{
+			name:     "Unavailablef",
+			err:      Unavailablef("service %s is down", "payments"),
+			wantMsg:  "service payments is down",
+			wantCode: CodeUnavailable,
+		},
+	}
+	
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.err.Message != tt.wantMsg {
+				t.Errorf("expected message %q, got %q", tt.wantMsg, tt.err.Message)
+			}
+			if tt.err.Code != tt.wantCode {
+				t.Errorf("expected code %s, got %s", tt.wantCode, tt.err.Code)
+			}
+		})
 	}
 }
