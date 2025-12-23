@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [1.1.0] - TBD
+## [1.1.0] - 2025-12-22
 
 ### Added
 - Formatted error constructors: `Newf()` and `Wrapf()` for `fmt.Printf`-style messages
@@ -37,5 +37,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Comprehensive test suite with 99% coverage
 - Examples and documentation
 
-[Unreleased]: https://github.com/blackwell-systems/err-envelope/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/blackwell-systems/err-envelope/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/blackwell-systems/err-envelope/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/blackwell-systems/err-envelope/releases/tag/v1.0.0
