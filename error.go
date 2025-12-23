@@ -64,36 +64,46 @@ func Wrap(code Code, status int, msg string, cause error) *Error {
 }
 
 // WithDetails adds structured details to the error.
+// Returns a copy to avoid mutating shared error instances.
 func (e *Error) WithDetails(details any) *Error {
-	e.Details = details
-	return e
+	clone := *e
+	clone.Details = details
+	return &clone
 }
 
 // WithTraceID adds a trace ID for distributed tracing.
+// Returns a copy to avoid mutating shared error instances.
 func (e *Error) WithTraceID(id string) *Error {
-	e.TraceID = id
-	return e
+	clone := *e
+	clone.TraceID = id
+	return &clone
 }
 
 // WithRetryable sets whether the error is retryable.
+// Returns a copy to avoid mutating shared error instances.
 func (e *Error) WithRetryable(v bool) *Error {
-	e.Retryable = v
-	return e
+	clone := *e
+	clone.Retryable = v
+	return &clone
 }
 
 // WithStatus overrides the HTTP status code.
+// Returns a copy to avoid mutating shared error instances.
 func (e *Error) WithStatus(status int) *Error {
+	clone := *e
 	if status != 0 {
-		e.Status = status
+		clone.Status = status
 	}
-	return e
+	return &clone
 }
 
 // WithRetryAfter sets the retry-after duration for rate-limited responses.
 // The duration will be sent as a Retry-After header (in seconds).
+// Returns a copy to avoid mutating shared error instances.
 func (e *Error) WithRetryAfter(d time.Duration) *Error {
-	e.RetryAfter = d
-	return e
+	clone := *e
+	clone.RetryAfter = d
+	return &clone
 }
 
 // LogValue implements slog.LogValuer for structured logging.

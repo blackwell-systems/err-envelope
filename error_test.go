@@ -173,6 +173,42 @@ func TestWithRetryAfter(t *testing.T) {
 	}
 }
 
+func TestImmutability(t *testing.T) {
+	original := New(CodeNotFound, http.StatusNotFound, "not found")
+	
+	modified := original.
+		WithDetails(map[string]string{"id": "123"}).
+		WithTraceID("trace-456").
+		WithRetryable(true).
+		WithStatus(http.StatusGone)
+	
+	if original.Details != nil {
+		t.Error("WithDetails should not mutate original error")
+	}
+	if original.TraceID != "" {
+		t.Error("WithTraceID should not mutate original error")
+	}
+	if original.Retryable {
+		t.Error("WithRetryable should not mutate original error")
+	}
+	if original.Status != http.StatusNotFound {
+		t.Error("WithStatus should not mutate original error")
+	}
+	
+	if modified.Details == nil {
+		t.Error("modified error should have details")
+	}
+	if modified.TraceID != "trace-456" {
+		t.Errorf("modified error should have trace ID, got %s", modified.TraceID)
+	}
+	if !modified.Retryable {
+		t.Error("modified error should be retryable")
+	}
+	if modified.Status != http.StatusGone {
+		t.Errorf("modified error should have updated status, got %d", modified.Status)
+	}
+}
+
 func TestLogValue(t *testing.T) {
 	cause := errors.New("database timeout")
 	err := Internal("processing failed").
