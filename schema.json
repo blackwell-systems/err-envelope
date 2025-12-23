@@ -24,6 +24,10 @@
     "retryable": {
       "type": "boolean",
       "description": "Whether the client should retry the request"
+    },
+    "retry_after": {
+      "type": "string",
+      "description": "Human-readable duration to wait before retrying (e.g., '30s', '5m0s'). Only present when RetryAfter is set."
     }
   },
   "additionalProperties": false

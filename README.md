@@ -37,6 +37,19 @@ This forces clients to handle each endpoint specially. `err-envelope` provides a
 
 Every field has a purpose: stable codes for logic, messages for humans, details for context, trace IDs for debugging, and retry signals for resilience.
 
+**Rate limiting example:**
+```json
+{
+  "code": "RATE_LIMITED",
+  "message": "Too many requests",
+  "trace_id": "a1b2c3d4e5f6",
+  "retryable": true,
+  "retry_after": "30s"
+}
+```
+
+The `retry_after` field (human-readable duration) appears when `WithRetryAfter()` is used, alongside the standard `Retry-After` HTTP header.
+
 ## Installation
 
 ```bash
@@ -130,6 +143,30 @@ errenvelope.Timeout("Database query timed out")       // 504
 // Downstream errors
 errenvelope.Downstream("payments", err)               // 502
 errenvelope.DownstreamTimeout("payments", err)        // 504
+```
+
+### Formatted Constructors
+
+Use `fmt.Printf`-style formatting for dynamic error messages:
+
+```go
+// Low-level formatted constructors
+userID := "12345"
+err := errenvelope.Newf(CodeNotFound, 404, "user %s not found", userID)
+
+// Wrap errors with formatting
+dbErr := sql.ErrNoRows
+err := errenvelope.Wrapf(CodeInternal, 500, "failed to fetch user %s", dbErr, userID)
+
+// Formatted helper functions
+errenvelope.Internalf("database %s connection failed", "postgres")
+errenvelope.NotFoundf("user %d not found", 12345)
+errenvelope.BadRequestf("invalid field: %s", fieldName)
+errenvelope.Unauthorizedf("missing header: %s", "Authorization")
+errenvelope.Forbiddenf("insufficient permissions for %s", resource)
+errenvelope.Conflictf("email %s already exists", email)
+errenvelope.Timeoutf("query exceeded %dms timeout", 5000)
+errenvelope.Unavailablef("service %s is down", "payments")
 ```
 
 ### Custom Errors
@@ -281,7 +318,8 @@ A [JSON Schema](schema.json) is included for client tooling and contract testing
     "message": { "type": "string" },
     "details": { "type": "object" },
     "trace_id": { "type": "string" },
-    "retryable": { "type": "boolean" }
+    "retryable": { "type": "boolean" },
+    "retry_after": { "type": "string" }
   }
 }
 ```
